@@ -220,19 +220,19 @@ function RecommendationCourses({
 
   const mappingNote = {
     Skill: {
-      noteText: "position job",
+      noteText: "Position Job",
       subNoteText: (bothException) => {
         return null;
       },
     },
     Form: {
-      noteText: "study form",
+      noteText: "Study method",
       subNoteText: (bothException) => {
         return null;
       },
     },
     Lan: {
-      noteText: "language",
+      noteText: "Language",
       subNoteText: (bothException, bothNgoaiLe) => {
         const lan =
           bothException.find((el) => el.ExceptionType == "Lan") ||
@@ -241,12 +241,12 @@ function RecommendationCourses({
               (el) => el.ExceptionType == "Lan"
             ));
         return lan && lan.lan_remain
-          ? `The courses' language is: ${lan.lan_remain}`
+          ? `Language of the course: ${lan.lan_remain}`
           : null;
       },
     },
     Fee: {
-      noteText: "fee",
+      noteText: "Fee",
       subNoteText: (bothException, bothNgoaiLe) => {
         const fee =
           bothException.find((el) => el.ExceptionType == "Fee") ||
@@ -255,14 +255,14 @@ function RecommendationCourses({
               (el) => el.ExceptionType == "Fee"
             ));
         return fee && fee.Output
-          ? `Total study budget: ${new Intl.NumberFormat("it-IT").format(
+          ? `Budget of the course: ${new Intl.NumberFormat("it-IT").format(
               fee.Output
             )} VNĐ 💵`
           : null;
       },
     },
     Duration: {
-      noteText: "duration",
+      noteText: "Duration",
       subNoteText: (bothException, bothNgoaiLe) => {
         const duration =
           bothException.find((el) => el.ExceptionType == "Duration") ||
@@ -271,12 +271,12 @@ function RecommendationCourses({
               (el) => el.ExceptionType == "Duration"
             ));
         return duration && duration.Output
-          ? `Total study time: ${duration.Output} ⏲️`
+          ? `Duration of the course: ${duration.Output} ⏲️`
           : null;
       },
     },
     Frame_Remain: {
-      noteText: "studying period",
+      noteText: "Frametime",
       subNoteText: (bothException, bothNgoaiLe) => {
         const frameRemain =
           bothException.find((el) => el.ExceptionType == "Frame_Remain") ||
@@ -285,12 +285,11 @@ function RecommendationCourses({
               (el) => el.ExceptionType == "Frame_Remain"
             ));
         return frameRemain && frameRemain.frame_remain
-          ? `These courses are in the study period, including: ${frameRemain.frame_remain} 🗓️`
+          ? `Frametime of the course: ${frameRemain.frame_remain} 🗓️`
           : null;
       },
     },
   };
-
 
   function showStatusMessage() {
     let note,
@@ -313,7 +312,10 @@ function RecommendationCourses({
           subNoteList.push(subNoteText);
         });
         // note = `We suggest the ideal courses for your ${noteArr.length > 1 ? (noteArr.slice(0, -1).join(', ') + ', and ' + noteArr.slice(-1)) : noteArr[0]} you know.`;
-        note = `We recommend the courses that are best for you based on your ${
+
+        note = ` ${
+          coursesReducer.typeFilter
+        } ${countCourses()} courses based on your ${
           noteArr.length > 1
             ? noteArr.slice(0, -1).join(", ") + " and " + noteArr.slice(-1)
             : noteArr[0]
@@ -321,7 +323,7 @@ function RecommendationCourses({
         subNote =
           subNoteArr.length === 0
             ? ""
-            : `However, there are differences when compared to certain criteria, like as: ${
+            : `However, there are several aspects of the recommendation that are different from your choice, including: ${
                 subNoteArr.length > 1
                   ? subNoteArr.slice(0, -1).join(", ") +
                     " and " +
@@ -357,7 +359,7 @@ function RecommendationCourses({
       }
       case 203:
         note =
-          "You have enough skills that the profession requires, you can apply for that position.";
+          "You have enough skills that the job requires, you can apply for that position.";
         return (
           <Row style={{ padding: "10px 20px" }}>
             <span
@@ -373,6 +375,50 @@ function RecommendationCourses({
           </Row>
         );
       case 400:
+        note =
+          (!courseOfflineArrays || !courseOfflineArrays[0]) &&
+          (!courseOnlineArrays || courseOnlineArrays[0])
+            ? // `Không có khoá học ${method === MethodEnum.ONLINE ? "Online" : "Offline"} phù hợp với tiêu chí của bạn.` :
+              `No ${
+                method === MethodEnum.ONLINE ? "online" : "offline"
+              } courses.`
+            : "The system is updating the courses related to the required skills.";
+        subNote = "5 jobs related to the one you're looking for: ";
+        if (bothException && bothException[0] && bothException[0].job_offer) {
+          subNoteList = (
+            bothException &&
+            bothException[0] &&
+            bothException[0].job_offer
+          ).split(", ");
+        }
+        return (
+          <Row style={{ padding: "10px 20px" }}>
+            <span
+              style={{
+                fontSize: "1rem",
+                fontWeight: "bold",
+                display: "block",
+                width: "100%",
+              }}
+            >
+              {note}
+            </span>
+            {subNoteList && subNoteList.length > 0 && (
+              <>
+                <span
+                  style={{ fontSize: "1rem", display: "block", width: "100%" }}
+                >
+                  {subNote}
+                </span>
+                <ul style={{ width: "100%" }}>
+                  {subNoteList.map((e, i) => (
+                    <li key={i}>{e}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </Row>
+        );
       case 401:
       case 402:
       case 403:
@@ -381,16 +427,15 @@ function RecommendationCourses({
           (!courseOnlineArrays || courseOnlineArrays[0])
             ? // `Không có khoá học ${method === MethodEnum.ONLINE ? "Online" : "Offline"} phù hợp với tiêu chí của bạn.` :
               `No ${
-                method === MethodEnum.ONLINE ? "Online" : "Offline"
-              } courses meet your requirements.`
-            : "The system is updating courses related to the required missing skills.";
-        subNote =
-          "You might look at five occupations that are associated with the career you are pursuing: ";
-        if (bothException && bothException[0] && bothException[0].Job_offer) {
+                method === MethodEnum.ONLINE ? "online" : "offline"
+              } courses.`
+            : "The system is updating the courses related to the required skills.";
+        subNote = "5 jobs related to the one you're looking for: ";
+        if (bothException && bothException[0] && bothException[0].job_offer) {
           subNoteList = (
             bothException &&
             bothException[0] &&
-            bothException[0].Job_offer
+            bothException[0].job_offer
           ).split(", ");
         }
         return (
@@ -445,6 +490,14 @@ function RecommendationCourses({
   //   return newCourseList;
   // };
 
+  function countCourses() {
+    let count = 0;
+    courses.forEach((paging) => {
+      count += paging.length;
+    });
+    return count;
+  }
+
   return (
     <Row>
       <Col md={9}>
@@ -496,15 +549,17 @@ function RecommendationCourses({
             </ModalBody>
           </Modal>
           <CardBody>
-            {showStatusMessage()}
-            <h1>RS</h1>
-            <h4>You have {courses.length} courses </h4>
-            ({coursesReducer.typeFilter ? coursesReducer.typeFilter : 'process'})
+            <h5>
+              <b>
+                Result Recommendation Systems for {coursesReducer.occupation}
+              </b>
+            </h5>
+            <h5><div style={{color: '#0062B1'}}>{showStatusMessage()}&nbsp;</div></h5>
+
             <Row>
               {courses[activePage - 1] &&
                 courses[activePage - 1].map((item, index) => {
                   return (
-                    
                     <Col md="6" lg="4" key={index}>
                       <Card
                         data-tip
@@ -581,7 +636,9 @@ function RecommendationCourses({
                               target="_blank"
                               to={{
                                 pathname: `course/${item.courseID}`,
-                                search: `?skillsAcquired=${Object.keys(coursesReducer.skills_acquired).join(", ")}`,
+                                search: `?skillsAcquired=${Object.keys(
+                                  coursesReducer.skills_acquired
+                                ).join(", ")}`,
                               }}
                               className="btn-wide mb-2 btn-icon d-inline-block btn btn-outline-primary"
                             >
@@ -610,7 +667,11 @@ function RecommendationCourses({
       <Col md={3}>
         <Card>
           <CardBody>
-            <CardTitle className="text-danger">Learning method</CardTitle>
+            <CardTitle>
+              <h5>
+                <b> Learning method</b>
+              </h5>
+            </CardTitle>
             <Row>
               <Col md={12}>
                 <FormGroup className="ml-4">
@@ -625,7 +686,7 @@ function RecommendationCourses({
                     checked={method === MethodEnum.ONLINE}
                   />
                   <Label check for="online">
-                    Online
+                    ONLINE
                   </Label>
                 </FormGroup>
               </Col>
@@ -644,7 +705,7 @@ function RecommendationCourses({
                     checked={method === MethodEnum.OFFLINE}
                   />
                   <Label check for="offline">
-                    Offline
+                    OFFLINE
                   </Label>
                 </FormGroup>
               </Col>
@@ -652,19 +713,31 @@ function RecommendationCourses({
           </CardBody>
 
           <CardBody>
-            <CardTitle className="text-danger">SKILL REQUIRE FOR {coursesReducer.occupation}</CardTitle>
+            <CardTitle>
+              <h5>
+                <b>
+                  SKILLS REQUIRED FOR{" "}
+                  <span style={{ color: "#9f0500" }}>
+                    {coursesReducer.occupation}
+                  </span>
+                </b>
+              </h5>
+            </CardTitle>
             <Row>
               <Col md={12}>
                 <div>
                   {skills_acquired.map((item, index) => (
                     <span
-                      onClick={() => {
-                      }}
-                      className={`pointer btn btn-outline-primary m-1 p-${item.value / 3 > 3 ? "3" : item.value / 3 > 2 ? "2" : "1"}`}
+                      onClick={() => {}}
+                      // className={`pointer btn btn-outline-primary m-1 p-${item.value / 3 > 3 ? "3" : item.value / 3 > 2 ? "2" : "1"}`}
+                      className={`pointer btn btn-outline-primary m-1 btn-fs-${Math.max(
+                        1,
+                        6 - Math.ceil(item.value / 2)
+                      )}`}
                       key={index}
                     >
                       {item.label}
-                      {item.value}
+                      {/* {item.value} */}
                     </span>
                   ))}
                 </div>
@@ -673,11 +746,24 @@ function RecommendationCourses({
           </CardBody>
 
           <CardBody>
-            <CardTitle className="text-danger">
-              SKILL TO LEARN FOR {coursesReducer.occupation}
+            <CardTitle>
+              <h5>
+                <b>
+                  SKILLS TO LEARN FOR{" "}
+                  <span style={{ color: "#9f0500" }}>
+                    {coursesReducer.occupation}{" "}
+                  </span>
+                </b>
+              </h5>
             </CardTitle>
             <Row>
               <Col md={12}>
+                <div>
+                  <h8>
+                    Filter Courses By Skills
+                    <br />
+                  </h8>
+                </div>
                 <div>
                   {/* {coursesProvidedKkills().split(", ").map((skill, index) => (
                       <a href="" onClick={(e) => e.preventDefault()} className="btn btn-outline-primary m-1" key={index}>{skill}</a>
@@ -695,25 +781,32 @@ function RecommendationCourses({
                       //     }
                       //   }
                       // }
-
-                      return (<span
-                        onClick={() => {
-                          if (filterArrays.includes(skill)) {
-                            setFilterArrays(
-                              filterArrays.filter((item) => skill !== item)
-                            );
-                          } else {
-                            setFilterArrays([...filterArrays, skill]);
-                          }
-                        }}
-                        className={`pointer btn btn-outline-primary m-1 ${
-                          filterArrays.includes(skill) ? "active-btn" : ""
-                        }`}
-                        key={index}
-                      >
-                        {skill}
-                      </span>)
-            })}
+                      const i = skills_acquired.find(
+                        (i) => i.label.toLowerCase() === skill.toLowerCase()
+                      );
+                      return (
+                        <span
+                          onClick={() => {
+                            if (filterArrays.includes(skill)) {
+                              setFilterArrays(
+                                filterArrays.filter((item) => skill !== item)
+                              );
+                            } else {
+                              setFilterArrays([...filterArrays, skill]);
+                            }
+                          }}
+                          className={`pointer btn btn-outline-primary m-1 ${
+                            filterArrays.includes(skill) ? "active-btn" : ""
+                          } btn-fs-${Math.max(
+                            1,
+                            6 - Math.ceil((i ? i.value : 5) / 2)
+                          )}`}
+                          key={index}
+                        >
+                          {skill}
+                        </span>
+                      );
+                    })}
                 </div>
               </Col>
             </Row>
@@ -723,21 +816,29 @@ function RecommendationCourses({
                   {/* {lstSkillNotProvider()} */}
                   {lstSkillNotProvider()
                     .split(", ")
-                    .map((skill, index) => (
-                      <a
-                        href=""
-                        onClick={(e) => {
-                          e.preventDefault();
-                          toastErrorText(
-                            "No exists courses is provided for this skill."
-                          );
-                        }}
-                        className="btn btn-outline-secondary m-1"
-                        key={index}
-                      >
-                        {skill}
-                      </a>
-                    ))}
+                    .map((skill, index) => {
+                      const i = skills_acquired.find(
+                        (i) => i.label.toLowerCase() === skill.toLowerCase()
+                      );
+                      return (
+                        <a
+                          href=""
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toastErrorText(
+                              "No exists courses is provided for this skill."
+                            );
+                          }}
+                          className={`btn btn-outline-secondary m-1 btn-fs-${Math.max(
+                            1,
+                            6 - Math.ceil((i ? i.value : 5) / 2)
+                          )}`}
+                          key={index}
+                        >
+                          {skill}
+                        </a>
+                      );
+                    })}
                 </div>
               </Col>
             </Row>

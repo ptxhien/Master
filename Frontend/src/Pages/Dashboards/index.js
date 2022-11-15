@@ -51,6 +51,7 @@ export default function Dashboards() {
       CourseID: CourseID, 
     }).then((result) => {
       toastSuccessText("Completed Course!");
+      localStorage.setItem("time_enroll", Date.now());
       dispatch(getInvoices());
       dispatch({
         type: Types.AUTH_UPDATE,
@@ -60,7 +61,7 @@ export default function Dashboards() {
   }
   const getFilterInvoices = () => {
     if (filter == 'All') {
-      return invoicesReducer.data;
+      return invoicesReducer.data || [];
     } else if (filter == 'Completed') {
       return invoicesReducer.data.filter((item) => !!item.Completed);
     } else if (filter == 'Uncompleted') {
@@ -88,7 +89,7 @@ export default function Dashboards() {
                         setFilter(e.target.value)
                       }}
                     >
-                      <option value={"All Courses"}>All</option>
+                      <option value={"All"}>All Courses</option>
                       <option value={"Completed"}>Completed Course</option>
                       <option value={"Uncompleted"}>Uncompleted Courses</option>
                     </Input>
@@ -105,6 +106,7 @@ export default function Dashboards() {
                     <th>Price </th>
                     <th>Purchase Date </th>
                     <th>Status</th>
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -117,9 +119,9 @@ export default function Dashboards() {
                       <td>{row.ItemPrice == 0
                                 ? "Free"
                                 : new Intl.NumberFormat("it-IT").format(
-                                  row.ItemPrice
-                                  ) + " VNĐ"}</td>
+                                  row.ItemPrice) + " VNĐ"}</td>
                       <td>{row.InvoiceDate}</td>
+                      <td>{!!row.Completed ? 'Completed' : 'Uncompleted'}</td>
                       <td><Button
                             disabled={!!row.Completed}
                             className="btn-wide mb-2 mr-2 btn-icon"
@@ -127,7 +129,6 @@ export default function Dashboards() {
                             color="primary"
                             onClick={(e) => onCompleted(e, row.InvoiceNo, row.CourseID)}
                           >Completed</Button>
-                          
                       </td>
                     </tr>
                   ))}
